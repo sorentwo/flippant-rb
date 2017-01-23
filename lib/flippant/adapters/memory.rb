@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Flippant
   module Adapter
     class Memory

@@ -5,6 +5,7 @@ module Flippant
 
   module Adapter
     autoload :Memory, "flippant/adapters/memory"
+    autoload :Redis, "flippant/adapters/redis"
   end
 
   extend Forwardable

@@ -1,9 +1,11 @@
-[Flippant::Adapter::Memory].each do |adapter|
+[Flippant::Adapter::Memory, Flippant::Adapter::Redis].each do |adapter|
   RSpec.describe adapter do
     before do
       Flippant.configure do |config|
         config.adapter = adapter.new
       end
+
+      Flippant.clear
     end
 
     describe ".add" do
