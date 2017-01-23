@@ -134,9 +134,29 @@
       end
     end
 
-    describe "breakdown" do
+    describe ".exists?" do
+      it "checks whether a feature exists" do
+        Flippant.add("search")
+
+        expect(Flippant.exists?("search")).to be_truthy
+        expect(Flippant.exists?("breach")).to be_falsy
+      end
+
+      it "checks whether a feature and group exist" do
+        Flippant.enable("search", "nobody")
+
+        expect(Flippant.exists?("search", "nobody")).to be_truthy
+        expect(Flippant.exists?("search", "everybody")).to be_falsy
+      end
+    end
+
+    describe ".breakdown" do
       it "expands all groups and values" do
         expect(Flippant.breakdown).to eq({})
+      end
+
+      it "works without any features" do
+        expect(Flippant.breakdown({id: 1})).to eq({})
       end
 
       it "lists all features with their metadata" do
@@ -154,12 +174,6 @@
           "delete" => {"radical" => []},
           "invite" => {"heinous" => [5, 6]}
         )
-      end
-    end
-
-    describe "breakdown" do
-      it "works without any features" do
-        expect(Flippant.breakdown({id: 1})).to eq({})
       end
 
       it "lists all enabled features for an actor" do

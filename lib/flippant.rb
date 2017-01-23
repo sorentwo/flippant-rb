@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Flippant
   autoload :Registry, "flippant/registry"
 
@@ -11,13 +13,14 @@ module Flippant
   extend Forwardable
   extend self
 
-  attr_writer :adapter, :registry
+  attr_writer :adapter, :registry, :serializer
 
   def_delegators :adapter,
                  :add,
                  :remove,
                  :enable,
                  :enabled?,
+                 :exists?,
                  :disable,
                  :features,
                  :breakdown,
@@ -34,6 +37,10 @@ module Flippant
 
   def registry
     @registry ||= Flippant::Registry.new
+  end
+
+  def serializer
+    @serializer ||= JSON
   end
 
   def configure

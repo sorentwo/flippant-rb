@@ -3,6 +3,8 @@
 module Flippant
   module Adapter
     class Memory
+      attr_reader :table
+
       def initialize
         clear
       end
@@ -35,18 +37,22 @@ module Flippant
         end
       end
 
-      def features(filter = :all)
-        filter = filter.to_s
+      def exists?(feature, group = nil)
+        if group.nil?
+          table.key?(feature)
+        else
+          !!table.dig(feature, group.to_s)
+        end
+      end
 
-        matching = if filter == "all"
-          table
+      def features(filter = nil)
+        if filter.nil?
+          table.keys.sort
         else
           table.select do |name, pairs|
-            pairs.any? { |(group, _)| group == filter }
-          end
+            pairs.any? { |(group, _)| group == filter.to_s }
+          end.keys.sort
         end
-
-        matching.keys.sort
       end
 
       def breakdown(actor = nil)
@@ -60,10 +66,6 @@ module Flippant
       def clear
         @table = {}
       end
-
-      private
-
-      attr_reader :table
     end
   end
 end

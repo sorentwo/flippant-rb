@@ -1,16 +1,24 @@
 # frozen_string_literal: true
 
-require "json"
 require "redis"
 
 module Flippant
   module Adapter
     class Redis
+      extend Forwardable
+
       DEFAULT_KEY = "features"
 
-      def initialize(client = ::Redis.current, key = DEFAULT_KEY)
+      attr_reader :client, :key, :serializer
+
+      def_delegators :serializer, :dump, :load
+
+      def initialize(client = ::Redis.current,
+                     key = DEFAULT_KEY,
+                     serializer = Flippant.serializer)
         @client = client
         @key = key
+        @serializer = serializer
       end
 
       def add(feature)
@@ -45,6 +53,14 @@ module Flippant
         end
       end
 
+      def exists?(feature, group = nil)
+        if group.nil?
+          client.sismember(key, feature)
+        else
+          client.hexists(namespace(feature), group)
+        end
+      end
+
       def features(filter = :all)
         if filter == :all
           client.smembers(key).sort
@@ -67,14 +83,6 @@ module Flippant
 
       private
 
-      def dump(value)
-        JSON.dump(value)
-      end
-
-      def load(value)
-        JSON.load(value)
-      end
-
       def feature_rules(feature)
         namespaced = namespace(feature)
 
@@ -86,8 +94,6 @@ module Flippant
       def namespace(feature)
         "#{key}-#{feature}"
       end
-
-      attr_reader :client, :key
     end
   end
 end
