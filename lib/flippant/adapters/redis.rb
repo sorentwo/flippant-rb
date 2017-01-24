@@ -35,7 +35,11 @@ module Flippant
       def enable(feature, group, values = [])
         add(feature)
 
-        client.hset(namespace(feature), group, dump(values))
+        fkey = namespace(feature)
+        old_values = load(client.hget(fkey, group)) || []
+        new_values = dump(old_values | values)
+
+        client.hset(fkey, group, new_values)
       end
 
       def disable(feature, group)

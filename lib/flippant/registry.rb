@@ -6,8 +6,8 @@ module Flippant
       clear
     end
 
-    def register(group, fun)
-      table[group.to_s] = fun
+    def register(group, fun = nil, &block)
+      table[group.to_s] = fun || block
     end
 
     def registered

@@ -10,7 +10,7 @@ module Flippant
       end
 
       def add(feature)
-        table[feature] ||= {}
+        table[feature.to_s] ||= {}
       end
 
       def remove(feature)
@@ -18,19 +18,19 @@ module Flippant
       end
 
       def enable(feature, group, values = [])
-        add(feature)
+        fkey = feature.to_s
+        gkey = group.to_s
 
-        table[feature][group] = values
+        table[fkey][gkey] ||= []
+        table[fkey][gkey] = (table[fkey][gkey] | values)
       end
 
       def disable(feature, to_remove)
-        table[feature].reject! { |(group, _)| group == to_remove }
+        table[feature.to_s].reject! { |(group, _)| group == to_remove.to_s }
       end
 
       def enabled?(feature, actor, registered = Flippant.registered)
-        rules = table[feature] || {}
-
-        rules.any? do |group, values|
+        table[feature.to_s].any? do |group, values|
           if (block = registered[group.to_s])
             block.call(actor, values)
           end
@@ -64,7 +64,7 @@ module Flippant
       end
 
       def clear
-        @table = {}
+        @table = Hash.new { |hash, key| hash[key] = {} }
       end
     end
   end

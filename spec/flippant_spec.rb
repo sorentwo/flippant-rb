@@ -8,6 +8,15 @@
       Flippant.clear
     end
 
+    describe ".register" do
+      it "accepts a proc or a block" do
+        Flippant.register("awesome", ->(_, _) { true })
+        Flippant.register("greatest") { |_, _| true }
+
+        expect(Flippant.registered.keys).to eq(%w[awesome greatest])
+      end
+    end
+
     describe ".add" do
       it "adds to the list of known features" do
         Flippant.add("search")
@@ -66,22 +75,34 @@
     describe ".enable" do
       it "adds a feature rule for a group" do
         Flippant.enable("search", "staff", [1])
-        Flippant.enable("search", "staff", [])
         Flippant.enable("search", "users", [1])
         Flippant.enable("delete", "staff")
+        Flippant.enable(:delete, :staff)
 
         expect(Flippant.features).to eq(%w[delete search])
         expect(Flippant.features("staff")).to eq(%w[delete search])
         expect(Flippant.features("users")).to eq(["search"])
       end
+
+      it "merges additional values" do
+        Flippant.enable("search", "members", [1, 2])
+        Flippant.enable("search", "members", [3])
+        Flippant.enable("search", "members", [1])
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"members" => [1, 2, 3]}
+        )
+      end
     end
 
     describe ".disable" do
       it "disables the feature for a group" do
-        Flippant.enable("search", "staff", true)
-        Flippant.enable("search", "users", false)
+        Flippant.enable("search", "staff")
+        Flippant.enable("search", "users")
+        Flippant.enable("search", "random")
 
         Flippant.disable("search", "users")
+        Flippant.disable(:search, :users)
 
         expect(Flippant.features).to eq(["search"])
         expect(Flippant.features("staff")).to eq(["search"])
@@ -103,6 +124,7 @@
 
         expect(Flippant.enabled?("search", actor_a)).to be_truthy
         expect(Flippant.enabled?("search", actor_b)).to be_falsy
+        expect(Flippant.enabled?(:search, actor_a)).to be_truthy
       end
 
       it "checks for a feature against multiple groups" do
