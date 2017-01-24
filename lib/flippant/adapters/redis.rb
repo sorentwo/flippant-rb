@@ -35,18 +35,26 @@ module Flippant
       def enable(feature, group, values = [])
         add(feature)
 
-        fkey = namespace(feature)
-        old_values = load(client.hget(fkey, group)) || []
+        namespaced = namespace(feature)
+        old_values = get_values(namespaced, group)
         new_values = dump(old_values | values)
 
-        client.hset(fkey, group, new_values)
+        client.hset(namespaced, group, new_values)
       end
 
-      def disable(feature, group)
+      def disable(feature, group, values = [])
         namespaced = namespace(feature)
 
-        client.hdel(namespaced, group)
-        client.srem(key, feature) if client.hgetall(namespaced).empty?
+        if values.any?
+          old_values = get_values(namespaced, group)
+          new_values = dump(old_values - values)
+
+          client.hset(namespaced, group, new_values)
+        else
+          client.hdel(namespaced, group)
+        end
+
+        maybe_cleanup(feature)
       end
 
       def enabled?(feature, actor, registered = Flippant.registered)
@@ -93,6 +101,16 @@ module Flippant
         client.hgetall(namespaced).each_with_object({}) do |(key, val), memo|
           memo[key] = load(val)
         end
+      end
+
+      def get_values(namespaced, group)
+        load(client.hget(namespaced, group)) || []
+      end
+
+      def maybe_cleanup(feature)
+        namespaced = namespace(feature)
+
+        client.srem(key, feature) if client.hkeys(namespaced).empty?
       end
 
       def namespace(feature)

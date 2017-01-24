@@ -25,8 +25,14 @@ module Flippant
         table[fkey][gkey] = (table[fkey][gkey] | values)
       end
 
-      def disable(feature, to_remove)
-        table[feature.to_s].reject! { |(group, _)| group == to_remove.to_s }
+      def disable(feature, group, values = [])
+        rules = table[feature.to_s]
+
+        if values.any?
+          remove_values(rules, group, values)
+        else
+          remove_group(rules, group)
+        end
       end
 
       def enabled?(feature, actor, registered = Flippant.registered)
@@ -65,6 +71,16 @@ module Flippant
 
       def clear
         @table = Hash.new { |hash, key| hash[key] = {} }
+      end
+
+      private
+
+      def remove_group(rules, to_remove)
+        rules.reject! { |(group, _)| group == to_remove.to_s }
+      end
+
+      def remove_values(rules, group, values)
+        rules[group] = (rules[group] - values)
       end
     end
   end

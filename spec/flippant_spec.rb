@@ -108,6 +108,15 @@
         expect(Flippant.features("staff")).to eq(["search"])
         expect(Flippant.features("users")).to eq([])
       end
+
+      it "retains the group and removes values" do
+        Flippant.enable("search", "members", [1, 2])
+        Flippant.disable("search", "members", [2])
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"members" => [1]}
+        )
+      end
     end
 
     describe ".enabled?" do
