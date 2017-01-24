@@ -35,21 +35,18 @@ module Flippant
       def enable(feature, group, values = [])
         add(feature)
 
-        namespaced = namespace(feature)
-        old_values = get_values(namespaced, group)
-        new_values = dump((old_values | values).sort)
-
-        client.hset(namespaced, group, new_values)
+        change_values(namespace(feature), group) do |old|
+          (old | values).sort
+        end
       end
 
       def disable(feature, group, values = [])
         namespaced = namespace(feature)
 
         if values.any?
-          old_values = get_values(namespaced, group)
-          new_values = dump(old_values - values)
-
-          client.hset(namespaced, group, new_values)
+          change_values(namespaced, group) do |old|
+            old - values
+          end
         else
           client.hdel(namespaced, group)
         end
@@ -115,6 +112,17 @@ module Flippant
 
       def namespace(feature)
         "#{key}-#{feature}"
+      end
+
+      def change_values(namespaced, group)
+        client.watch(namespaced) do
+          old_values = get_values(namespaced, group)
+          new_values = yield(old_values)
+
+          client.multi do
+            client.hset(namespaced, group, dump(new_values))
+          end
+        end
       end
     end
   end

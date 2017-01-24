@@ -96,10 +96,24 @@
 
       it "ensures that values remain sorted" do
         Flippant.enable("search", "members", [3, 1])
-        Flippant.enable("search", "members", [5, 2])
+        Flippant.enable("search", "members", [4, 2])
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => [1, 2, 3, 5]}
+          "search" => {"members" => [1, 2, 3, 4]}
+        )
+      end
+
+      it "operates atomically to avoid race conditions" do
+        threads = [
+          Thread.new { Flippant.enable("search", "members", [1, 2]) },
+          Thread.new { Flippant.enable("search", "members", [3, 4]) },
+          Thread.new { Flippant.enable("search", "members", [5, 6]) }
+        ]
+
+        threads.each(&:join)
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"members" => [1, 2, 3, 4, 5, 6]}
         )
       end
     end
@@ -124,6 +138,22 @@
 
         expect(Flippant.breakdown).to eq(
           "search" => {"members" => [1]}
+        )
+      end
+
+      it "operates atomically to avoid race conditions" do
+        Flippant.enable("search", "members", [1, 2, 3, 4, 5])
+
+        threads = [
+          Thread.new { Flippant.disable("search", "members", [1]) },
+          Thread.new { Flippant.disable("search", "members", [3]) },
+          Thread.new { Flippant.disable("search", "members", [5]) }
+        ]
+
+        threads.each(&:join)
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"members" => [2, 4]}
         )
       end
     end

@@ -20,18 +20,24 @@ module Flippant
       def enable(feature, group, values = [])
         fkey = feature.to_s
         gkey = group.to_s
+        mutex = Mutex.new
 
-        table[fkey][gkey] ||= []
-        table[fkey][gkey] = (table[fkey][gkey] | values).sort
+        mutex.synchronize do
+          table[fkey][gkey] ||= []
+          table[fkey][gkey] = (table[fkey][gkey] | values).sort
+        end
       end
 
       def disable(feature, group, values = [])
         rules = table[feature.to_s]
+        mutex = Mutex.new
 
-        if values.any?
-          remove_values(rules, group, values)
-        else
-          remove_group(rules, group)
+        mutex.synchronize do
+          if values.any?
+            remove_values(rules, group, values)
+          else
+            remove_group(rules, group)
+          end
         end
       end
 
