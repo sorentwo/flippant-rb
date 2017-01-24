@@ -22,7 +22,7 @@ module Flippant
         gkey = group.to_s
 
         table[fkey][gkey] ||= []
-        table[fkey][gkey] = (table[fkey][gkey] | values)
+        table[fkey][gkey] = (table[fkey][gkey] | values).sort
       end
 
       def disable(feature, group, values = [])

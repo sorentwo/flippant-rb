@@ -93,6 +93,15 @@
           "search" => {"members" => [1, 2, 3]}
         )
       end
+
+      it "ensures that values remain sorted" do
+        Flippant.enable("search", "members", [3, 1])
+        Flippant.enable("search", "members", [5, 2])
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"members" => [1, 2, 3, 5]}
+        )
+      end
     end
 
     describe ".disable" do

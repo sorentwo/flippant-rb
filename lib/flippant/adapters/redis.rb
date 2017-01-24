@@ -37,7 +37,7 @@ module Flippant
 
         namespaced = namespace(feature)
         old_values = get_values(namespaced, group)
-        new_values = dump(old_values | values)
+        new_values = dump((old_values | values).sort)
 
         client.hset(namespaced, group, new_values)
       end
