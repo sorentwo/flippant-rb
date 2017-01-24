@@ -14,7 +14,7 @@
         Flippant.add("search")
         Flippant.add("delete")
 
-        expect(Flippant.features).to eq(["delete", "search"])
+        expect(Flippant.features).to eq(%w[delete search])
       end
     end
 
@@ -70,8 +70,8 @@
         Flippant.enable("search", "users", [1])
         Flippant.enable("delete", "staff")
 
-        expect(Flippant.features).to eq(["delete", "search"])
-        expect(Flippant.features("staff")).to eq(["delete", "search"])
+        expect(Flippant.features).to eq(%w[delete search])
+        expect(Flippant.features("staff")).to eq(%w[delete search])
         expect(Flippant.features("users")).to eq(["search"])
       end
     end
@@ -122,12 +122,12 @@
       end
 
       it "uses rule values when checking" do
-        Flippant.register("awesome", ->(actor, ids) { ids.include?(actor[:id]) })
+        Flippant.register("great", ->(actor, ids) { ids.include?(actor[:id]) })
 
         actor_a = {id: 1}
         actor_b = {id: 5}
 
-        Flippant.enable("search", "awesome", [1, 2, 3])
+        Flippant.enable("search", "great", [1, 2, 3])
 
         expect(Flippant.enabled?("search", actor_a)).to be_truthy
         expect(Flippant.enabled?("search", actor_b)).to be_falsy
@@ -156,7 +156,7 @@
       end
 
       it "works without any features" do
-        expect(Flippant.breakdown({id: 1})).to eq({})
+        expect(Flippant.breakdown(id: 1)).to eq({})
       end
 
       it "lists all features with their metadata" do

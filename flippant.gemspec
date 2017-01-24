@@ -1,7 +1,7 @@
 # coding: utf-8
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'flippant/version'
+require "flippant/version"
 
 Gem::Specification.new do |spec|
   spec.name        = "flippant"
@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors     = ["Parker Selbert"]
   spec.email       = ["parker@sorentwo.com"]
 
-  spec.summary     = "Fast feature toggling for applications, with plugable backends."
-  spec.description = "Fast feature toggling for applications, with plugable backends."
+  spec.summary     = "Fast feature toggling for applications"
+  spec.description = "Fast feature toggling for applications"
   spec.homepage    = "https://github.com/sorentwo/flippant-rb"
   spec.license     = "MIT"
 
@@ -25,4 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.2"
   spec.add_development_dependency "redis", "~> 3.3"
+  spec.add_development_dependency "rubocop", "~> 0.47"
 end

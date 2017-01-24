@@ -47,7 +47,7 @@ module Flippant
 
       def enabled?(feature, actor, registered = Flippant.registered)
         client.hgetall(namespace(feature)).any? do |group, values|
-          if block = registered[group]
+          if (block = registered[group])
             block.call(actor, load(values))
           end
         end

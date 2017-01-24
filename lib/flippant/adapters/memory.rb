@@ -31,7 +31,7 @@ module Flippant
         rules = table[feature] || {}
 
         rules.any? do |group, values|
-          if block = registered[group.to_s]
+          if (block = registered[group.to_s])
             block.call(actor, values)
           end
         end
@@ -41,7 +41,7 @@ module Flippant
         if group.nil?
           table.key?(feature)
         else
-          !!table.dig(feature, group.to_s)
+          table.dig(feature, group.to_s)
         end
       end
 
@@ -49,7 +49,7 @@ module Flippant
         if filter.nil?
           table.keys.sort
         else
-          table.select do |name, pairs|
+          table.select do |_, pairs|
             pairs.any? { |(group, _)| group == filter.to_s }
           end.keys.sort
         end

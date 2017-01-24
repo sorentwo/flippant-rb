@@ -1,0 +1,44 @@
+AllCops:
+  Exclude:
+    - "bin/*"
+    - "vendor/**/*"
+  TargetRubyVersion: 2.3
+
+Style/FrozenStringLiteralComment:
+  EnforcedStyle: always
+  Exclude:
+    - "Gemfile*"
+    - "Rakefile"
+    - "*.gemspec"
+    - "spec/**/*"
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+# Turn this on in the future
+Style/Documentation:
+  Enabled: false
+
+# Extend self preserves private methods
+Style/ModuleFunction:
+  Enabled: false
+
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    '%i': '[]'
+    '%w': '[]'
+    '%W': '[]'
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+  EnforcedStyleForEmptyBraces: no_space
+
+Style/IndentArray:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
