@@ -7,15 +7,15 @@ module Flippant
     class Redis
       extend Forwardable
 
-      DEFAULT_KEY = "features"
+      DEFAULT_KEY = "flippant-features"
 
       attr_reader :client, :key, :serializer
 
       def_delegators :serializer, :dump, :load
 
-      def initialize(client = ::Redis.current,
-                     key = DEFAULT_KEY,
-                     serializer = Flippant.serializer)
+      def initialize(client: ::Redis.current,
+                     key: DEFAULT_KEY,
+                     serializer: Flippant.serializer)
         @client = client
         @key = key
         @serializer = serializer
