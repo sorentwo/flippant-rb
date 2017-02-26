@@ -158,6 +158,29 @@
       end
     end
 
+    describe ".rename" do
+      it "renames an existing feature" do
+        Flippant.enable("search", "members", [1])
+
+        Flippant.rename("search", "super-search")
+
+        expect(Flippant.breakdown).to eq(
+          "super-search" => {"members" => [1]}
+        )
+      end
+
+      it "clobbers an existing feature with the same name" do
+        Flippant.enable("search", "members", [1])
+        Flippant.enable("super-search", "members", [2])
+
+        Flippant.rename(:search, :"super-search")
+
+        expect(Flippant.breakdown).to eq(
+          "super-search" => {"members" => [1]}
+        )
+      end
+    end
+
     describe ".enabled?" do
       it "checks a feature for an actor" do
         Flippant.register("staff", ->(actor, _values) { actor[:staff?] })
@@ -209,6 +232,7 @@
         Flippant.add("search")
 
         expect(Flippant.exists?("search")).to be_truthy
+        expect(Flippant.exists?(:search)).to be_truthy
         expect(Flippant.exists?("breach")).to be_falsy
       end
 

@@ -41,6 +41,13 @@ module Flippant
         end
       end
 
+      def rename(old_feature, new_feature)
+        old_feature = old_feature.to_s
+        new_feature = new_feature.to_s
+
+        table[new_feature] = table.delete(old_feature)
+      end
+
       def enabled?(feature, actor, registered = Flippant.registered)
         table[feature.to_s].any? do |group, values|
           if (block = registered[group.to_s])
@@ -51,9 +58,9 @@ module Flippant
 
       def exists?(feature, group = nil)
         if group.nil?
-          table.key?(feature)
+          table.key?(feature.to_s)
         else
-          table.dig(feature, group.to_s)
+          table.dig(feature.to_s, group.to_s)
         end
       end
 

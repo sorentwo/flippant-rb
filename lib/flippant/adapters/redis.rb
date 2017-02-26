@@ -54,6 +54,19 @@ module Flippant
         maybe_cleanup(feature)
       end
 
+      def rename(old_feature, new_feature)
+        old_namespaced = namespace(old_feature)
+        new_namespaced = namespace(new_feature)
+
+        client.watch(old_namespaced, new_namespaced) do
+          client.multi do
+            client.srem(key, old_feature)
+            client.sadd(key, new_feature)
+            client.rename(old_namespaced, new_namespaced)
+          end
+        end
+      end
+
       def enabled?(feature, actor, registered = Flippant.registered)
         client.hgetall(namespace(feature)).any? do |group, values|
           if (block = registered[group])

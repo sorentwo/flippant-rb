@@ -17,14 +17,15 @@ module Flippant
 
   def_delegators :adapter,
                  :add,
-                 :remove,
+                 :breakdown,
+                 :clear,
+                 :disable,
                  :enable,
                  :enabled?,
                  :exists?,
-                 :disable,
                  :features,
-                 :breakdown,
-                 :clear
+                 :remove,
+                 :rename
 
   def_delegators :registry,
                  :register,
