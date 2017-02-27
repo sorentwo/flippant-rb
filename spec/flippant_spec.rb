@@ -25,6 +25,15 @@
 
         expect(Flippant.features).to eq(%w[delete search])
       end
+
+      it "normalizes feature names" do
+        Flippant.add(:search)
+        Flippant.add("Search")
+        Flippant.add(" search ")
+        Flippant.add("\nSEARCH\t")
+
+        expect(Flippant.features).to eq(["search"])
+      end
     end
 
     describe ".clear" do
@@ -164,9 +173,15 @@
 
         Flippant.rename("search", "super-search")
 
-        expect(Flippant.breakdown).to eq(
-          "super-search" => {"members" => [1]}
-        )
+        expect(Flippant.features).to eq(["super-search"])
+      end
+
+      it "normalizes values while renaming" do
+        Flippant.enable("search", "members")
+
+        Flippant.rename(" SEARCH ", " SUPER-SEARCH ")
+
+        expect(Flippant.features).to eq(["super-search"])
       end
 
       it "clobbers an existing feature with the same name" do

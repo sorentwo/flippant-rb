@@ -22,7 +22,7 @@ module Flippant
       end
 
       def add(feature)
-        client.sadd(key, feature)
+        client.sadd(key, normalize(feature))
       end
 
       def remove(feature)
@@ -55,6 +55,8 @@ module Flippant
       end
 
       def rename(old_feature, new_feature)
+        old_feature = normalize(old_feature)
+        new_feature = normalize(new_feature)
         old_namespaced = namespace(old_feature)
         new_namespaced = namespace(new_feature)
 
@@ -124,7 +126,11 @@ module Flippant
       end
 
       def namespace(feature)
-        "#{key}-#{feature}"
+        "#{key}-#{normalize(feature)}"
+      end
+
+      def normalize(feature)
+        feature.to_s.downcase.strip
       end
 
       def change_values(namespaced, group)

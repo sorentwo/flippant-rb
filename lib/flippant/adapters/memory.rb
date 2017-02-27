@@ -10,7 +10,7 @@ module Flippant
       end
 
       def add(feature)
-        table[feature.to_s] ||= {}
+        table[normalize(feature)] ||= {}
       end
 
       def remove(feature)
@@ -18,7 +18,7 @@ module Flippant
       end
 
       def enable(feature, group, values = [])
-        fkey = feature.to_s
+        fkey = normalize(feature)
         gkey = group.to_s
         mutex = Mutex.new
 
@@ -29,7 +29,7 @@ module Flippant
       end
 
       def disable(feature, group, values = [])
-        rules = table[feature.to_s]
+        rules = table[normalize(feature)]
         mutex = Mutex.new
 
         mutex.synchronize do
@@ -42,14 +42,14 @@ module Flippant
       end
 
       def rename(old_feature, new_feature)
-        old_feature = old_feature.to_s
-        new_feature = new_feature.to_s
+        old_feature = normalize(old_feature)
+        new_feature = normalize(new_feature)
 
         table[new_feature] = table.delete(old_feature)
       end
 
       def enabled?(feature, actor, registered = Flippant.registered)
-        table[feature.to_s].any? do |group, values|
+        table[normalize(feature)].any? do |group, values|
           if (block = registered[group.to_s])
             block.call(actor, values)
           end
@@ -57,10 +57,12 @@ module Flippant
       end
 
       def exists?(feature, group = nil)
+        feature = normalize(feature)
+
         if group.nil?
-          table.key?(feature.to_s)
+          table.key?(feature)
         else
-          table.dig(feature.to_s, group.to_s)
+          table.dig(feature, group.to_s)
         end
       end
 
@@ -87,6 +89,10 @@ module Flippant
       end
 
       private
+
+      def normalize(feature)
+        feature.to_s.downcase.strip
+      end
 
       def remove_group(rules, to_remove)
         rules.reject! { |(group, _)| group == to_remove.to_s }
