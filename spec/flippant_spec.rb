@@ -82,6 +82,11 @@
     end
 
     describe ".enable" do
+      before do
+        Flippant.register("staff", ->(_, _) { true })
+        Flippant.register("users", ->(_, _) { true })
+      end
+
       it "adds a feature rule for a group" do
         Flippant.enable("search", "staff", [1])
         Flippant.enable("search", "users", [1])
@@ -93,45 +98,55 @@
         expect(Flippant.features("users")).to eq(["search"])
       end
 
+      it "does not enable features for unknown groups" do
+        expect do
+          Flippant.enable("search", "not-a-real-group")
+        end.to raise_error(Flippant::Error)
+      end
+
       it "merges additional values" do
-        Flippant.enable("search", "members", [1, 2])
-        Flippant.enable("search", "members", [3])
-        Flippant.enable("search", "members", [1])
+        Flippant.enable("search", "users", [1, 2])
+        Flippant.enable("search", "users", [3])
+        Flippant.enable("search", "users", [1])
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => [1, 2, 3]}
+          "search" => {"users" => [1, 2, 3]}
         )
       end
 
       it "ensures that values remain sorted" do
-        Flippant.enable("search", "members", [3, 1])
-        Flippant.enable("search", "members", [4, 2])
+        Flippant.enable("search", "users", [3, 1])
+        Flippant.enable("search", "users", [4, 2])
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => [1, 2, 3, 4]}
+          "search" => {"users" => [1, 2, 3, 4]}
         )
       end
 
       it "operates atomically to avoid race conditions" do
         threads = [
-          Thread.new { Flippant.enable("search", "members", [1, 2]) },
-          Thread.new { Flippant.enable("search", "members", [3, 4]) },
-          Thread.new { Flippant.enable("search", "members", [5, 6]) }
+          Thread.new { Flippant.enable("search", "users", [1, 2]) },
+          Thread.new { Flippant.enable("search", "users", [3, 4]) },
+          Thread.new { Flippant.enable("search", "users", [5, 6]) }
         ]
 
         threads.each(&:join)
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => [1, 2, 3, 4, 5, 6]}
+          "search" => {"users" => [1, 2, 3, 4, 5, 6]}
         )
       end
     end
 
     describe ".disable" do
+      before do
+        Flippant.register("staff", ->(_, _) { true })
+        Flippant.register("users", ->(_, _) { true })
+      end
+
       it "disables the feature for a group" do
         Flippant.enable("search", "staff")
         Flippant.enable("search", "users")
-        Flippant.enable("search", "random")
 
         Flippant.disable("search", "users")
         Flippant.disable(:search, :users)
@@ -142,11 +157,11 @@
       end
 
       it "retains the group and removes values" do
-        Flippant.enable("search", "members", [1, 2])
-        Flippant.disable("search", "members", [2])
+        Flippant.enable("search", "users", [1, 2])
+        Flippant.disable("search", "users", [2])
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => [1]}
+          "search" => {"users" => [1]}
         )
       end
 
@@ -160,23 +175,27 @@
       end
 
       it "operates atomically to avoid race conditions" do
-        Flippant.enable("search", "members", [1, 2, 3, 4, 5])
+        Flippant.enable("search", "users", [1, 2, 3, 4, 5])
 
         threads = [
-          Thread.new { Flippant.disable("search", "members", [1]) },
-          Thread.new { Flippant.disable("search", "members", [3]) },
-          Thread.new { Flippant.disable("search", "members", [5]) }
+          Thread.new { Flippant.disable("search", "users", [1]) },
+          Thread.new { Flippant.disable("search", "users", [3]) },
+          Thread.new { Flippant.disable("search", "users", [5]) }
         ]
 
         threads.each(&:join)
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => [2, 4]}
+          "search" => {"users" => [2, 4]}
         )
       end
     end
 
     describe ".rename" do
+      before do
+        Flippant.register("members", ->(_, _) { true })
+      end
+
       it "renames an existing feature" do
         Flippant.enable("search", "members", [1])
 
@@ -261,6 +280,7 @@
       end
 
       it "checks whether a feature and group exist" do
+        Flippant.register("nobody", ->(_, _) { true })
         Flippant.enable("search", "nobody")
 
         expect(Flippant.exists?("search", "nobody")).to be_truthy

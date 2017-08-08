@@ -20,9 +20,8 @@ module Flippant
       def enable(feature, group, values = [])
         fkey = normalize(feature)
         gkey = group.to_s
-        mutex = Mutex.new
 
-        mutex.synchronize do
+        Mutex.new.synchronize do
           table[fkey][gkey] ||= []
           table[fkey][gkey] = (table[fkey][gkey] | values).sort
         end
@@ -30,9 +29,8 @@ module Flippant
 
       def disable(feature, group, values = [])
         rules = table[normalize(feature)]
-        mutex = Mutex.new
 
-        mutex.synchronize do
+        Mutex.new.synchronize do
           if values.any?
             remove_values(rules, group, values)
           else
