@@ -3,6 +3,7 @@
 require "json"
 
 module Flippant
+  autoload :Error, "flippant/errors"
   autoload :Registry, "flippant/registry"
 
   module Adapter
@@ -20,7 +21,6 @@ module Flippant
                  :breakdown,
                  :clear,
                  :disable,
-                 :enable,
                  :enabled?,
                  :exists?,
                  :features,
@@ -30,7 +30,18 @@ module Flippant
   def_delegators :registry,
                  :register,
                  :registered,
+                 :registered?,
                  :clear
+
+  # Guarded Delegation
+
+  def enable(feature, group, values = [])
+    raise Flippant::Error, "Unknown group: #{group}" unless registered?(group)
+
+    adapter.enable(feature, group, values)
+  end
+
+  # Configuration
 
   def adapter
     @adapter ||= Flippant::Adapter::Memory.new

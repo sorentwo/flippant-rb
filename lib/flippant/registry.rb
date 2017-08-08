@@ -14,6 +14,10 @@ module Flippant
       table
     end
 
+    def registered?(group)
+      table.key?(group.to_s)
+    end
+
     def clear
       @table = {}
     end
