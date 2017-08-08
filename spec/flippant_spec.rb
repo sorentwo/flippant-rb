@@ -150,6 +150,15 @@
         )
       end
 
+      it "allows symbol-based group names" do
+        Flippant.enable("search", :members, [1])
+        Flippant.disable("search", :members, [1])
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"members" => []}
+        )
+      end
+
       it "operates atomically to avoid race conditions" do
         Flippant.enable("search", "members", [1, 2, 3, 4, 5])
 

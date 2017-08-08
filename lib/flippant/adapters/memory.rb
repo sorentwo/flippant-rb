@@ -99,7 +99,7 @@ module Flippant
       end
 
       def remove_values(rules, group, values)
-        rules[group] = (rules[group] - values)
+        rules[group.to_s] = (rules[group.to_s] - values)
       end
     end
   end
