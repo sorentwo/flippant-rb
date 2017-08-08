@@ -166,11 +166,11 @@
       end
 
       it "allows symbol-based group names" do
-        Flippant.enable("search", :members, [1])
-        Flippant.disable("search", :members, [1])
+        Flippant.enable("search", :staff, [1])
+        Flippant.disable("search", :staff, [1])
 
         expect(Flippant.breakdown).to eq(
-          "search" => {"members" => []}
+          "search" => {"staff" => []}
         )
       end
 
