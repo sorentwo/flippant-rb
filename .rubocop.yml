@@ -4,8 +4,19 @@ AllCops:
     - "vendor/**/*"
   TargetRubyVersion: 2.3
 
+Layout/IndentArray:
+  Enabled: false
+
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
+  EnforcedStyleForEmptyBraces: no_space
+
 Metrics/AbcSize:
   Max: 20
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
 
 Metrics/ClassLength:
   Max: 200
@@ -43,14 +54,3 @@ Style/PercentLiteralDelimiters:
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
-
-Style/SpaceInsideHashLiteralBraces:
-  EnforcedStyle: no_space
-  EnforcedStyleForEmptyBraces: no_space
-
-Style/IndentArray:
-  Enabled: false
-
-Metrics/BlockLength:
-  Exclude:
-    - "spec/**/*"
