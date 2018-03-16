@@ -17,11 +17,7 @@ module Flippant
       end
 
       def add(feature)
-        command = <<~SQL
-          INSERT INTO #{table} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING
-        SQL
-
-        exec(command, [feature])
+        exec("INSERT INTO #{table} (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", [feature])
       end
 
       def breakdown(actor = :all)
@@ -66,12 +62,9 @@ module Flippant
 
       def enabled?(feature, actor)
         result = exec("SELECT rules FROM #{table} WHERE name = $1", [feature])
+        object = JSON.parse(result.values.flatten.first || "[]")
 
-        if (object = result.values.flatten.first)
-          Rules.enabled_for_actor?(JSON.parse(object), actor)
-        else
-          false
-        end
+        Rules.enabled_for_actor?(object, actor)
       end
 
       def exists?(feature, group = nil)
