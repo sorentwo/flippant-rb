@@ -3,9 +3,11 @@
 module Flippant
   module Adapter
     class Memory
-      attr_reader :table
+      attr_reader :mutex, :table
 
       def initialize
+        @mutex = Mutex.new
+
         clear
       end
 
@@ -25,7 +27,7 @@ module Flippant
         fkey = feature
         gkey = group.to_s
 
-        Mutex.new.synchronize do
+        mutex.synchronize do
           table[fkey][gkey] ||= []
           table[fkey][gkey] = (table[fkey][gkey] | values).sort
         end
@@ -34,7 +36,7 @@ module Flippant
       def disable(feature, group, values = [])
         rules = table[feature]
 
-        Mutex.new.synchronize do
+        mutex.synchronize do
           if values.any?
             remove_values(rules, group, values)
           else
