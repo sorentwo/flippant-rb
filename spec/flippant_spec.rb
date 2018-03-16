@@ -1,10 +1,16 @@
-[Flippant::Adapter::Memory, Flippant::Adapter::Redis].each do |adapter|
+[Flippant::Adapter::Memory,
+ Flippant::Adapter::Postgres,
+ Flippant::Adapter::Redis].each do |adapter|
   RSpec.describe adapter do
-    before do
+    before(:all) do
       Flippant.configure do |config|
         config.adapter = adapter.new
       end
 
+      Flippant.adapter.setup
+    end
+
+    before do
       Flippant.clear
     end
 
@@ -109,18 +115,10 @@
         Flippant.enable("search", "users", [3])
         Flippant.enable("search", "users", [1])
 
-        expect(Flippant.breakdown).to eq(
-          "search" => {"users" => [1, 2, 3]}
-        )
-      end
+        breakdown = Flippant.breakdown
 
-      it "ensures that values remain sorted" do
-        Flippant.enable("search", "users", [3, 1])
-        Flippant.enable("search", "users", [4, 2])
-
-        expect(Flippant.breakdown).to eq(
-          "search" => {"users" => [1, 2, 3, 4]}
-        )
+        expect(breakdown).to have_key("search")
+        expect(breakdown.dig("search", "users").sort).to eq([1, 2, 3])
       end
 
       it "operates atomically to avoid race conditions" do
@@ -132,9 +130,10 @@
 
         threads.each(&:join)
 
-        expect(Flippant.breakdown).to eq(
-          "search" => {"users" => [1, 2, 3, 4, 5, 6]}
-        )
+        breakdown = Flippant.breakdown
+
+        expect(breakdown).to have_key("search")
+        expect(breakdown.dig("search", "users").sort).to eq([1, 2, 3, 4, 5, 6])
       end
     end
 
@@ -185,9 +184,10 @@
 
         threads.each(&:join)
 
-        expect(Flippant.breakdown).to eq(
-          "search" => {"users" => [2, 4]}
-        )
+        breakdown = Flippant.breakdown
+
+        expect(breakdown).to have_key("search")
+        expect(breakdown.dig("search", "users").sort).to eq([2, 4])
       end
     end
 
