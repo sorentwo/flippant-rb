@@ -21,8 +21,12 @@ module Flippant
         @serializer = serializer
       end
 
+      def setup
+        true
+      end
+
       def add(feature)
-        client.sadd(key, normalize(feature))
+        client.sadd(key, feature)
       end
 
       def remove(feature)
@@ -55,8 +59,8 @@ module Flippant
       end
 
       def rename(old_feature, new_feature)
-        old_feature = normalize(old_feature)
-        new_feature = normalize(new_feature)
+        old_feature = old_feature
+        new_feature = new_feature
         old_namespaced = namespace(old_feature)
         new_namespaced = namespace(new_feature)
 
@@ -77,7 +81,7 @@ module Flippant
         end
       end
 
-      def exists?(feature, group = nil)
+      def exists?(feature, group)
         if group.nil?
           client.sismember(key, feature)
         else
@@ -126,11 +130,7 @@ module Flippant
       end
 
       def namespace(feature)
-        "#{key}-#{normalize(feature)}"
-      end
-
-      def normalize(feature)
-        feature.to_s.downcase.strip
+        "#{key}-#{feature}"
       end
 
       def change_values(namespaced, group)

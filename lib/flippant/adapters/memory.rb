@@ -1,16 +1,24 @@
 # frozen_string_literal: true
 
+require "monitor"
+
 module Flippant
   module Adapter
     class Memory
-      attr_reader :table
+      attr_reader :monitor, :table
 
       def initialize
+        @monitor = Monitor.new
+
         clear
       end
 
+      def setup
+        true
+      end
+
       def add(feature)
-        table[normalize(feature)] ||= {}
+        table[feature] ||= {}
       end
 
       def remove(feature)
@@ -18,19 +26,19 @@ module Flippant
       end
 
       def enable(feature, group, values = [])
-        fkey = normalize(feature)
+        fkey = feature
         gkey = group.to_s
 
-        Mutex.new.synchronize do
+        monitor.synchronize do
           table[fkey][gkey] ||= []
           table[fkey][gkey] = (table[fkey][gkey] | values).sort
         end
       end
 
       def disable(feature, group, values = [])
-        rules = table[normalize(feature)]
+        rules = table[feature]
 
-        Mutex.new.synchronize do
+        monitor.synchronize do
           if values.any?
             remove_values(rules, group, values)
           else
@@ -40,23 +48,21 @@ module Flippant
       end
 
       def rename(old_feature, new_feature)
-        old_feature = normalize(old_feature)
-        new_feature = normalize(new_feature)
+        old_feature = old_feature
+        new_feature = new_feature
 
         table[new_feature] = table.delete(old_feature)
       end
 
       def enabled?(feature, actor, registered = Flippant.registered)
-        table[normalize(feature)].any? do |group, values|
+        table[feature].any? do |group, values|
           if (block = registered[group.to_s])
             block.call(actor, values)
           end
         end
       end
 
-      def exists?(feature, group = nil)
-        feature = normalize(feature)
-
+      def exists?(feature, group)
         if group.nil?
           table.key?(feature)
         else
@@ -87,10 +93,6 @@ module Flippant
       end
 
       private
-
-      def normalize(feature)
-        feature.to_s.downcase.strip
-      end
 
       def remove_group(rules, to_remove)
         rules.reject! { |(group, _)| group == to_remove.to_s }
