@@ -1,19 +1,17 @@
 # frozen_string_literal: true
 
-require "monitor"
+require "active_record"
 require "pg"
 
 module Flippant
   module Adapter
     class Postgres
       DEFAULT_TABLE = "flippant_features"
-      DEFAULT_URL = "postgres:///flippant_test"
 
-      attr_reader :client, :monitor
+      attr_reader :pool, :table
 
-      def initialize(client: nil, options: {}, table: DEFAULT_TABLE)
-        @client = client || connect(options)
-        @monitor = Monitor.new
+      def initialize(pool: ActiveRecord::Base.connection_pool, table: DEFAULT_TABLE)
+        @pool = pool
         @table = table
       end
 
@@ -35,10 +33,21 @@ module Flippant
       end
 
       def disable(feature, group, values)
-        if values.any?
-          disable_some(feature, group, values)
+        if values.empty?
+          exec("UPDATE #{table} SET rules = rules - $1 WHERE name = $2", [group, feature])
         else
-          disable_all(feature, group)
+          command = <<~SQL
+            UPDATE #{table} SET rules = jsonb_set(rules, $1, array_to_json(
+              ARRAY(
+                SELECT UNNEST(ARRAY(SELECT jsonb_array_elements(COALESCE(rules#>$1, '[]'::jsonb))))
+                EXCEPT
+                SELECT UNNEST(ARRAY(SELECT jsonb_array_elements($2)))
+              )
+            )::jsonb)
+            WHERE name = $3
+          SQL
+
+          exec(command, [encode_array([group]), encode_json(values), feature])
         end
       end
 
@@ -79,21 +88,23 @@ module Flippant
                  [feature, group])
           end
 
-        result.values.first == ["t"]
+        result.values.first == [true]
       end
 
       def features(group = :all)
-        (group == :all ? all_rules : some_rules(group)).values.flatten
+        result =
+          if group == :all
+            exec("SELECT name FROM #{table} ORDER BY name ASC")
+          else
+            exec("SELECT name FROM #{table} WHERE rules ? $1 ORDER BY name ASC", [group])
+          end
+
+        result.values.flatten
       end
 
       def rename(old_name, new_name)
-        transaction do |conn|
-          conn.exec_params("DELETE FROM #{table} WHERE name = $1",
-                           [new_name])
-
-          conn.exec_params("UPDATE #{table} SET name = $1 WHERE name = $2",
-                           [new_name, old_name])
-        end
+        exec("DELETE FROM #{table} WHERE name = $1", [new_name])
+        exec("UPDATE #{table} SET name = $1 WHERE name = $2", [new_name, old_name])
       end
 
       def remove(feature)
@@ -112,35 +123,11 @@ module Flippant
 
       private
 
-      def connect(options)
-        uri = URI.parse(options.fetch(:url, DEFAULT_URL))
+      def exec(sql, params = [])
+        pool.with_connection do |connection|
+          client = connection.raw_connection
 
-        PG.connect(uri.hostname,
-                   uri.port,
-                   nil,
-                   nil,
-                   uri.path[1..-1],
-                   uri.user,
-                   uri.password)
-      end
-
-      def table
-        client.quote_ident(@table)
-      end
-
-      # Connection Helpers
-
-      def encode_array(value)
-        PG::TextEncoder::Array.new.encode(value)
-      end
-
-      def encode_json(value)
-        PG::TextEncoder::JSON.new.encode(value)
-      end
-
-      def exec(sql, params = nil)
-        monitor.synchronize do
-          if params.nil?
+          if params.empty?
             client.exec(sql)
           else
             client.exec_params(sql, params)
@@ -148,42 +135,12 @@ module Flippant
         end
       end
 
-      def transaction(&block)
-        monitor.synchronize do
-          client.transaction(&block)
-        end
+      def encode_array(value)
+        PG::TextEncoder::Array.new.encode(value)
       end
 
-      # Query Helpers
-
-      def all_rules
-        client.exec("SELECT name FROM #{table} ORDER BY name ASC")
-      end
-
-      def some_rules(group)
-        client.exec_params(
-          "SELECT name FROM #{table} WHERE rules ? $1 ORDER BY name ASC",
-          [group]
-        )
-      end
-
-      def disable_all(feature, group)
-        exec("UPDATE #{table} SET rules = rules - $1 WHERE name = $2", [group, feature])
-      end
-
-      def disable_some(feature, group, values)
-        command = <<~SQL
-          UPDATE #{table} SET rules = jsonb_set(rules, $1, array_to_json(
-            ARRAY(
-              SELECT UNNEST(ARRAY(SELECT jsonb_array_elements(COALESCE(rules#>$1, '[]'::jsonb))))
-              EXCEPT
-              SELECT UNNEST(ARRAY(SELECT jsonb_array_elements($2)))
-            )
-          )::jsonb)
-          WHERE name = $3
-        SQL
-
-        exec(command, [encode_array([group]), encode_json(values), feature])
+      def encode_json(value)
+        PG::TextEncoder::JSON.new.encode(value)
       end
     end
   end
