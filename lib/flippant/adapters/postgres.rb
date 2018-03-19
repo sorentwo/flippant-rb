@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "monitor"
 require "pg"
 
 module Flippant
@@ -8,11 +9,11 @@ module Flippant
       DEFAULT_TABLE = "flippant_features"
       DEFAULT_URL = "postgres:///flippant_test"
 
-      attr_reader :client, :mutex
+      attr_reader :client, :monitor
 
       def initialize(client: nil, options: {}, table: DEFAULT_TABLE)
         @client = client || connect(options)
-        @mutex = Mutex.new
+        @monitor = Monitor.new
         @table = table
       end
 
@@ -138,7 +139,7 @@ module Flippant
       end
 
       def exec(sql, params = nil)
-        mutex.synchronize do
+        monitor.synchronize do
           if params.nil?
             client.exec(sql)
           else
@@ -148,7 +149,7 @@ module Flippant
       end
 
       def transaction(&block)
-        mutex.synchronize do
+        monitor.synchronize do
           client.transaction(&block)
         end
       end
@@ -172,9 +173,9 @@ module Flippant
 
       def disable_some(feature, group, values)
         command = <<~SQL
-          UPDATE #{table} AS t SET rules = jsonb_set(t.rules, $1, array_to_json(
+          UPDATE #{table} SET rules = jsonb_set(rules, $1, array_to_json(
             ARRAY(
-              SELECT UNNEST(ARRAY(SELECT jsonb_array_elements(COALESCE(t.rules#>$1, '[]'::jsonb))))
+              SELECT UNNEST(ARRAY(SELECT jsonb_array_elements(COALESCE(rules#>$1, '[]'::jsonb))))
               EXCEPT
               SELECT UNNEST(ARRAY(SELECT jsonb_array_elements($2)))
             )

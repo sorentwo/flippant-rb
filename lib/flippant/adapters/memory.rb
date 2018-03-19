@@ -1,12 +1,14 @@
 # frozen_string_literal: true
 
+require "monitor"
+
 module Flippant
   module Adapter
     class Memory
-      attr_reader :mutex, :table
+      attr_reader :monitor, :table
 
       def initialize
-        @mutex = Mutex.new
+        @monitor = Monitor.new
 
         clear
       end
@@ -27,7 +29,7 @@ module Flippant
         fkey = feature
         gkey = group.to_s
 
-        mutex.synchronize do
+        monitor.synchronize do
           table[fkey][gkey] ||= []
           table[fkey][gkey] = (table[fkey][gkey] | values).sort
         end
@@ -36,7 +38,7 @@ module Flippant
       def disable(feature, group, values = [])
         rules = table[feature]
 
-        mutex.synchronize do
+        monitor.synchronize do
           if values.any?
             remove_values(rules, group, values)
           else
