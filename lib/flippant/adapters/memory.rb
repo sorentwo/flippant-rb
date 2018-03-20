@@ -21,18 +21,16 @@ module Flippant
         table[feature] ||= {}
       end
 
-      def remove(feature)
-        table.delete(feature)
+      def breakdown(actor = nil)
+        return table if actor.nil?
+
+        table.each_with_object({}) do |(feature, _), memo|
+          memo[feature] = enabled?(feature, actor)
+        end
       end
 
-      def enable(feature, group, values = [])
-        fkey = feature
-        gkey = group.to_s
-
-        monitor.synchronize do
-          table[fkey][gkey] ||= []
-          table[fkey][gkey] = (table[fkey][gkey] | values).sort
-        end
+      def clear
+        @table = Hash.new { |hash, key| hash[key] = {} }
       end
 
       def disable(feature, group, values = [])
@@ -47,11 +45,14 @@ module Flippant
         end
       end
 
-      def rename(old_feature, new_feature)
-        old_feature = old_feature
-        new_feature = new_feature
+      def enable(feature, group, values = [])
+        fkey = feature
+        gkey = group.to_s
 
-        table[new_feature] = table.delete(old_feature)
+        monitor.synchronize do
+          table[fkey][gkey] ||= []
+          table[fkey][gkey] = (table[fkey][gkey] | values).sort
+        end
       end
 
       def enabled?(feature, actor, registered = Flippant.registered)
@@ -80,16 +81,25 @@ module Flippant
         end
       end
 
-      def breakdown(actor = nil)
-        return table if actor.nil?
-
-        table.each_with_object({}) do |(feature, _), memo|
-          memo[feature] = enabled?(feature, actor)
+      def load(loaded)
+        monitor.synchronize do
+          loaded.each do |feature, rules|
+            rules.each do |group, values|
+              table[feature][group] = values
+            end
+          end
         end
       end
 
-      def clear
-        @table = Hash.new { |hash, key| hash[key] = {} }
+      def remove(feature)
+        table.delete(feature)
+      end
+
+      def rename(old_feature, new_feature)
+        old_feature = old_feature
+        new_feature = new_feature
+
+        table[new_feature] = table.delete(old_feature)
       end
 
       private

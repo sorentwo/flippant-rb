@@ -322,4 +322,34 @@ RSpec.shared_examples_for "Adapter" do
       )
     end
   end
+
+  describe "#dump and #load" do
+    let(:dumpfile) { "flippant.dump" }
+
+    it "feature dumps may be restored using load" do
+      begin
+        Flippant.register("awesome", ->(_, _) { true })
+        Flippant.register("radical", ->(_, _) { false })
+        Flippant.register("heinous", ->(_, _) { false })
+
+        Flippant.enable("search", "awesome")
+        Flippant.enable("search", "heinous", [1, 2])
+        Flippant.enable("delete", "radical")
+        Flippant.enable("invite", "heinous", [5, 6])
+
+        Flippant.dump(dumpfile)
+        Flippant.clear
+        Flippant.breakdown
+        Flippant.load(dumpfile)
+
+        expect(Flippant.breakdown).to eq(
+          "search" => {"awesome" => [], "heinous" => [1, 2]},
+          "delete" => {"radical" => []},
+          "invite" => {"heinous" => [5, 6]}
+        )
+      ensure
+        FileUtils.rm(dumpfile, force: true)
+      end
+    end
+  end
 end

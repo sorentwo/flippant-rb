@@ -21,7 +21,8 @@ module Flippant
   def_delegators :adapter,
                  :breakdown,
                  :clear,
-                 :features
+                 :features,
+                 :setup
 
   def_delegators :registry,
                  :register,
@@ -33,6 +34,12 @@ module Flippant
 
   def add(feature)
     adapter.add(normalize(feature))
+  end
+
+  def dump(path)
+    File.open(path, "w+") do |file|
+      file << serializer.dump(breakdown)
+    end
   end
 
   def exists?(features, group = nil)
@@ -51,6 +58,12 @@ module Flippant
 
   def disable(feature, group, values = [])
     adapter.disable(normalize(feature), group, values)
+  end
+
+  def load(path)
+    File.open(path, "r") do |file|
+      adapter.load(serializer.load(file.read))
+    end
   end
 
   def rename(old_name, new_name)

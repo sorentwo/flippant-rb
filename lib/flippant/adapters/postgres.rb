@@ -102,9 +102,25 @@ module Flippant
         result.values.flatten
       end
 
+      def load(loaded)
+        transaction do |client|
+          loaded.each do |feature, rules|
+            client.exec_params(
+              "INSERT INTO #{table} AS t (name, rules) VALUES ($1, $2)",
+              [feature, encode_json(rules)]
+            )
+          end
+        end
+      end
+
       def rename(old_name, new_name)
-        exec("DELETE FROM #{table} WHERE name = $1", [new_name])
-        exec("UPDATE #{table} SET name = $1 WHERE name = $2", [new_name, old_name])
+        transaction do |client|
+          client.exec_params("DELETE FROM #{table} WHERE name = $1",
+                             [new_name])
+
+          client.exec_params("UPDATE #{table} SET name = $1 WHERE name = $2",
+                             [new_name, old_name])
+        end
       end
 
       def remove(feature)
@@ -123,15 +139,27 @@ module Flippant
 
       private
 
-      def exec(sql, params = [])
+      def conn
         pool.with_connection do |connection|
           client = connection.raw_connection
 
+          yield client
+        end
+      end
+
+      def exec(sql, params = [])
+        conn do |client|
           if params.empty?
             client.exec(sql)
           else
             client.exec_params(sql, params)
           end
+        end
+      end
+
+      def transaction(&block)
+        conn do |client|
+          client.transaction(&block)
         end
       end
 

@@ -8,7 +8,7 @@ RSpec.describe Flippant::Adapter::Postgres do
       config.adapter = Flippant::Adapter::Postgres.new
     end
 
-    Flippant.adapter.setup
+    Flippant.setup
   end
 
   before do
