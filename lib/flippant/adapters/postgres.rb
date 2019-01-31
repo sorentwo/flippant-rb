@@ -10,8 +10,7 @@ module Flippant
 
       attr_reader :pool, :table
 
-      def initialize(pool: ActiveRecord::Base.connection_pool, table: DEFAULT_TABLE)
-        @pool = pool
+      def initialize(table: DEFAULT_TABLE)
         @table = table
       end
 
@@ -140,7 +139,7 @@ module Flippant
       private
 
       def conn
-        pool.with_connection do |connection|
+        ActiveRecord::Base.connection_pool.with_connection do |connection|
           client = connection.raw_connection
 
           yield client
