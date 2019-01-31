@@ -8,7 +8,7 @@ module Flippant
     class Postgres
       DEFAULT_TABLE = "flippant_features"
 
-      attr_reader :pool, :table
+      attr_reader :table
 
       def initialize(table: DEFAULT_TABLE)
         @table = table
@@ -139,7 +139,7 @@ module Flippant
       private
 
       def conn
-        ActiveRecord::Base.connection_pool.with_connection do |connection|
+        pool.with_connection do |connection|
           client = connection.raw_connection
 
           yield client
@@ -154,6 +154,10 @@ module Flippant
             client.exec_params(sql, params)
           end
         end
+      end
+
+      def pool
+        ActiveRecord::Base.connection_pool
       end
 
       def transaction(&block)
