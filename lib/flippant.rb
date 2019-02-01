@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "forwardable"
 
 module Flippant
   autoload :Error, "flippant/errors"

@@ -8,10 +8,9 @@ module Flippant
     class Postgres
       DEFAULT_TABLE = "flippant_features"
 
-      attr_reader :pool, :table
+      attr_reader :table
 
-      def initialize(pool: ActiveRecord::Base.connection_pool, table: DEFAULT_TABLE)
-        @pool = pool
+      def initialize(table: DEFAULT_TABLE)
         @table = table
       end
 
@@ -155,6 +154,10 @@ module Flippant
             client.exec_params(sql, params)
           end
         end
+      end
+
+      def pool
+        ActiveRecord::Base.connection_pool
       end
 
       def transaction(&block)

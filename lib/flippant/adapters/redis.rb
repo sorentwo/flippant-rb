@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "redis"
+require "forwardable"
 
 module Flippant
   module Adapter

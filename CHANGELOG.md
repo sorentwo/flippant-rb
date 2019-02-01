@@ -1,3 +1,7 @@
+* [Flippant::Adapter::Postgres] - Pool is no longer initialized to
+  `ActiveModel::Base.connection_pool` to prevent an issue where the pool
+  was being set before Active Model has a connection
+
 ## v0.9.0 2018-03-20
 
 ### Enhancements
