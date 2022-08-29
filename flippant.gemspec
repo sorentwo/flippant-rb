@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "pg", "~> 1.0"
   spec.add_development_dependency "rake"
-  spec.add_development_dependency "redis", "~> 4.0"
+  spec.add_development_dependency "redis", "~> 5.0"
   spec.add_development_dependency "rspec", "~> 3.7"
   spec.add_development_dependency "rubocop", "~> 1.0"
 end
